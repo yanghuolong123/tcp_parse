@@ -19,7 +19,7 @@
 ##  依赖
 
 - Rust 1.70+
-- [`clap`](https://crates.io/crates/clap) v4（用于命令行解析）
+- [`clap`](https://crates.io/crates/clap)（用于命令行解析）
 - [`pnet`](https://crates.io/crates/pnet)（用于数据包抓取）
 
 ---
