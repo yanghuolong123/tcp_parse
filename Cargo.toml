@@ -5,7 +5,7 @@ edition = "2024"
 
 authors = ["hlyang"]
 license = "MIT OR Apache-2.0"
-description = "A simple TCP packet capture and parsing(一个简单的TCP抓包解析工具)"
+description = "A simple TCP packet capture and parsing (一个简单的TCP抓包解析工具)"
 homepage = "https://github.com/yanghuolong123/tcp_parse"
 repository = "https://github.com/yanghuolong123/tcp_parse"
 documentation = "https://docs.rs/tcp_parse/"
@@ -15,3 +15,4 @@ categories = ["network-programming", "parser-implementations"]
 
 [dependencies]
 pnet = "0.35.0"
+clap = { version = "4.5.40", features = ["derive"] }

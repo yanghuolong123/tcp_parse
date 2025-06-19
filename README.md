@@ -1,9 +1,70 @@
-# tcp_parse
+# TCP Parse
 
-sudo ./tcp_parse
+一个使用 Rust 编写的简单 TCP 抓包工具，支持过滤网卡、IP 和端口，并解析 HTTP 报文内容。
 
-### 示例
-TCP包: 122.195.189.71:30015 -> 192.168.5.110:53782 | seq=2503552035 Ack=886803164 Len=416
-    十六进制:019E2ED02DA7FD7416B508EEF7BD15C7787FD08ED55203BF31F9B23A3DDAD2C1275EF7D5B14F7BA56CFCC677FFEADCCD3FD406025E518E7EE567CEE2B0D5F05B790EEA6674F4383559041F297DF167BCE2B44C4F05AC9E8C3D885A42B55BA6467F3484A84D8BFCFDC7E4270169D053C98902B33612CBAFE019F402B8823CD1D51277C93ED9F990E72D6D4CAEF2A99BB4A4F8C880F325D70695BC9BDBDCE75CC01C95F357F42D86F16891B3F6C1E9123D1553A1CFFB7FCBA53C5CAD59FCBDEA897987DEE974437DE2E382F4B7A33721B489428BFE7FF1F01825EFDFF4272F65B28C0F63CEDB08611C8BED499141A2E5EF53230C7D17819F1C680D7F10FEE860D4AE03E71353755136C7503850736D83A1EB6AA15EC65C5734AD9B490AABF0A057A35F46BE51311CBDBB3AA121893E8C7FA5D41DAE1AC571245585A0806B9D2D1976C4DFF5D393A4B1007C7FAAA5F8D4CE31B3297F39A97FC7B351CB1600D9F33A29BE29360234A2919F61111569930810E93208E4ADE301C3F2F2E6B4732A895C22E42416E7060A57E6B5F7BAFC9117D51CCDAFF9659B2A2BCEE9B6599F3A580C
-    ASCII:....-..t........x....R..1..:=...'^...O{.l..w....?...^Q.~.g.....[y..ft.85Y..)}.g...LO....=.ZB.[.F.4..M.....'.i.S....6.........<...w.>....-mL..........%........\....W.-..h......=.S......<\.Y....y...tC}......7!..B......%...'/e...c...a...I.A...S#.}....h.....`.....SuQ6.P8Psm...j.^.\W4..I....W._F.Q1...:.!.>........q$U...k.-.v........|......1.).9....Q.....:).)6.4...a..i....2..........s*.\".$....W............e.*+...Y.:X.
+---
+
+## 功能特点
+
+- 基于 `pnet` 抓取 TCP 报文
+- 支持通过命令行参数过滤：
+  - 网络接口（网卡）
+  - 源 IP / 目标 IP
+  - 源端口 / 目标端口
+- 自动打印 HTTP 请求和响应头
+- 十六进制和 ASCII 格式输出 TCP payload
+
+---
+
+##  依赖
+
+- Rust 1.70+
+- [`clap`](https://crates.io/crates/clap) v4（用于命令行解析）
+- [`pnet`](https://crates.io/crates/pnet)（用于数据包抓取）
+
+---
+
+## 项目结构
+tcp-sniffer/
+├── Cargo.toml
+└── src/
+├── main.rs # 主逻辑
+└── args.rs # 命令行参数解析模块
+
+
+## 使用方式
+
+### 编译
+
+```bash
+cargo build --release
+
+
+### 示例运行命令
+
+# 抓取 eth0 网卡上所有 TCP 报文
+cargo run -- --iface eth0
+
+# 抓取来自特定 IP 的报文
+cargo run -- --iface eth0 --src-ip 192.168.1.100
+
+# 抓取发往端口 80 的 TCP 报文
+cargo run -- --iface eth0 --dst-port 80
+
+
+### 示例输出
+
+监听接口: eth0
+TCP包: 192.168.1.100:34567 -> 93.184.216.34:80 | seq=123456 ack=789 len=121
+    十六进制:474554202f20485454502f312e310d0a486f73743a206578616d706c652e636f6d0d0a...
+    ASCII:GET / HTTP/1.1\r\nHost: example.com\r\n...
+
+---------- HTTP 数据开始 ----------
+    GET / HTTP/1.1
+    Host: example.com
+    User-Agent: curl/7.85.0
+    Accept: */*
+
+---------- HTTP 数据结束 ----------
+
 ===================================

@@ -1,23 +1,37 @@
+mod args;
+
 use pnet::{
     datalink::{self},
     packet::{
         Packet,
         ethernet::{EtherTypes, EthernetPacket},
         ip::IpNextHeaderProtocols,
-        ipv4::{ Ipv4Packet},
+        ipv4::Ipv4Packet,
         tcp::TcpPacket,
     },
 };
 
+use args::Args;
+use clap::Parser;
+
 fn main() {
+    let args = Args::parse();
+
     // 获取所有网络接口
     let interfaces = datalink::interfaces();
 
     // 选择第一个非回环、正在运行的接口
-    let interface = interfaces
-        .into_iter()
-        .find(|iface| !iface.is_loopback() && iface.is_up())
-        .expect("找不到可用的网络接口");
+    let interface = if let Some(ref name) = args.iface {
+        interfaces
+            .into_iter()
+            .find(|iface| iface.name == *name)
+            .expect("指定的网卡没找到")
+    } else {
+        interfaces
+            .into_iter()
+            .find(|iface| !iface.is_loopback() && iface.is_up())
+            .expect("找不到可用的网络接口")
+    };
 
     println!("使用网络接口:{}", interface.name);
 
@@ -40,6 +54,28 @@ fn main() {
                     if let Some(ipv4) = Ipv4Packet::new(eth_packet.payload()) {
                         if ipv4.get_next_level_protocol() == IpNextHeaderProtocols::Tcp {
                             if let Some(tcp) = TcpPacket::new(ipv4.payload()) {
+
+                                if let Some(filter_ip) = args.src_ip {
+                                    if ipv4.get_source() != filter_ip {
+                                        continue;
+                                    }
+                                }
+                                if let Some(filter_ip) = args.dst_ip {
+                                    if ipv4.get_destination()!= filter_ip {
+                                        continue;
+                                    }
+                                }
+                                if let Some(filter_port) = args.src_port {
+                                    if tcp.get_source() != filter_port {
+                                        continue;
+                                    }
+                                }
+                                if let Some(filter_port) = args.dst_port {
+                                    if tcp.get_destination() != filter_port {
+                                        continue;
+                                    }
+                                }
+
                                 println!(
                                     "TCP包: {}:{} -> {}:{} | seq={} Ack={} Len={}",
                                     ipv4.get_source(),
@@ -77,7 +113,7 @@ fn print_payload(payload: &[u8]) {
     // 十六进制输出
     print!("    十六进制:");
     for byte in &payload[..len] {
-        print!("{:02X}",byte);
+        print!("{:02X}", byte);
     }
     println!();
 
@@ -108,7 +144,7 @@ fn parse_http(payload: &[u8]) {
         if text.starts_with("GET ") || text.starts_with("POST ") || text.starts_with("HTTP/") {
             println!("---------- HTTP 数据开始 ----------");
             for line in text.lines().take(20) {
-                println!("    {}",line);
+                println!("    {}", line);
                 if line.is_empty() {
                     break; // 空行之后是body, 不再打印
                 }
